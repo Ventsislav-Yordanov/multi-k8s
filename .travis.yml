@@ -1,0 +1,27 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ventsi94/react-test -f ./client/Dockerfile.dev ./client 
+
+script:
+  - docker run -e CI=true ventsi94/react-test npm test
+
+after_success:
+  - docker build -t ventsi94/multi-client ./client
+  - docker build -t ventsi94/multi-nginx ./nginx
+  - docker build -t ventsi94/multi-server ./server
+  - docker build -t ventsi94/multi-worker ./worker
+
+  # Log in into the Docker CLI using environment variable set in the travis ci
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # push the images to docker hub
+  - docker push ventsi94/multi-client
+  - docker push ventsi94/multi-nginx
+  - docker push ventsi94/multi-server
+  - docker push ventsi94/multi-worker
+
+
+language: generic
